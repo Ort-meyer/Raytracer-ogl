@@ -7,6 +7,14 @@
 using namespace glm;
 using namespace std;
 
+struct RayFrustum
+{
+	vec3 ray10;
+	vec3 ray11;
+	vec3 ray01;
+	vec3 ray00;
+};
+
 class Camera
 {
 public:
@@ -19,13 +27,21 @@ public:
 	mat4 GetProj();
 	mat4 GetViewProj();
 
-private:
 	vec3 m_target;
-	vec3 m_up;
 	vec3 m_position;
+	RayFrustum m_frustum;
+
+
+
+private:
+	//vec3 m_target;
+	vec3 m_up;
+	//vec3 m_position;
 
 	mat4 m_view;
 	mat4 m_projection;
+
+	float m_rotateAngle;
 
 };
 

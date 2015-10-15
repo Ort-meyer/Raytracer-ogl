@@ -34,7 +34,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Debug\ComputeShader.glsl">
+    <None Include="ComputeShader.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

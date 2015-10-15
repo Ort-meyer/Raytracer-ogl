@@ -25,7 +25,9 @@ GLuint computeHandle;
 
 //Declaration of methods
 void RenderScene();
+void HandleKeyboardInput(unsigned char key, int x, int y);
 void InitStuff();
+
 
 //Random stuff
 int oddNumber;
@@ -208,6 +210,7 @@ void InitializeGlutCallbacks()
 {
 	glutDisplayFunc(RenderScene);
 	glutIdleFunc(RenderScene);
+	glutKeyboardUpFunc(HandleKeyboardInput);
 }
 
 GLuint GenerateTexture()
@@ -229,7 +232,12 @@ GLuint GenerateTexture()
 
 void InitStuff()
 {
-	m_camera = new Camera(vec3(0, 0, 1), vec3(0, 1, 0), vec3(0, 0, 0));
+	m_camera = new Camera(vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0));
+}
+
+void HandleKeyboardInput(unsigned char key, int x, int y)
+{
+	cout << key << endl;
 }
 
 void RenderScene()
@@ -239,23 +247,47 @@ void RenderScene()
 
 
 
+
+
 	/////////////OUR STUFF GOES HERE//////////////
+	//Update stuff
+	m_camera->Update();
 
 
 	//Compute shader stuff
 	glUseProgram(computeHandle);
 
 
-	//oddNumber++;
+	oddNumber++;
 	//cout << oddNumber << endl;
 
 	//glUniform1f(glGetUniformLocation(computeHandle, "roll"), (float)oddNumber*0.01f);
-	glUniform4fv(glGetUniformLocation(computeHandle, "viewProj"), 1, &m_camera->GetViewProj()[0][0]);
+	mat4 viewProj = m_camera->GetViewProj();
+	mat4 view = m_camera->GetView();
+
+	vec4 target = normalize(vec4(0, 0,1 , 0));
+	//vec4 target = vec4(0, 0, 1, 0);
+	//target = inverse(viewProj) * target;
+	vec3 target3 = m_camera->m_target;
+
+	//glUniform3f(glGetUniformLocation(computeHandle, "target"), m_camera->m_target.x, m_camera->m_target.y, m_camera->m_target.z);
+	//glUniform3f(glGetUniformLocation(computeHandle, "target"), m_camera->m_position.x, m_camera->m_position.y, m_camera->m_position.z);
+	glUniform4f(glGetUniformLocation(computeHandle, "sphere"), 200, 400, 20,50);
 	glUniform1i(glGetUniformLocation(computeHandle, "outputTexture"), 0);
+	glUniform3fv(glGetUniformLocation(computeHandle, "target"), 1, &target3[0]);
+	glUniformMatrix4fv(glGetUniformLocation(computeHandle, "view"), 1,GL_FALSE, &viewProj[0][0]);
+	glUniform3fv(glGetUniformLocation(computeHandle, "ray00"), 1, &m_camera->m_frustum.ray00[0]);
+	glUniform3fv(glGetUniformLocation(computeHandle, "ray10"), 1, &m_camera->m_frustum.ray10[0]);
+	glUniform3fv(glGetUniformLocation(computeHandle, "ray11"), 1, &m_camera->m_frustum.ray11[0]);
+	glUniform3fv(glGetUniformLocation(computeHandle, "ray01"), 1, &m_camera->m_frustum.ray01[0]);
+
 	glDispatchCompute(512 / 16, 512 / 16, 1);
+	
+	vec4 newTarget = view * vec4(0, 0, 1, 0);
 
 
 
+	vec2 pixel = vec2(400, 300);
 
 
 	////////////END OUR STUFF/////////////////
@@ -291,7 +323,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(1024, 768);
-	glutInitWindowPosition(100, 100);
+	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Raytracer");
 
 	InitializeGlutCallbacks();
