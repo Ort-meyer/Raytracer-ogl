@@ -3,6 +3,9 @@
 #include <glm\glm.hpp>
 #include <glm\gtx\transform.hpp>
 #include <glm\gtc\matrix_transform.hpp>
+#include <GL\freeglut.h>
+#define WIDTH 1024
+#define HEIGHT 768
 
 using namespace glm;
 using namespace std;
@@ -31,7 +34,7 @@ public:
 	vec3 m_position;
 	RayFrustum m_frustum;
 
-
+	void GetMouse(int x, int y);
 
 private:
 	//vec3 m_target;
@@ -41,7 +44,6 @@ private:
 	mat4 m_view;
 	mat4 m_projection;
 
-	float m_rotateAngle;
-
+	float m_rotateAngle, m_horizonalAngle, m_verticalAngle;
 };
 

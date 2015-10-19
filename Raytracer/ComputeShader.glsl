@@ -2,6 +2,8 @@
 
 uniform vec4 sphere;
 uniform vec3 target;
+uniform vec3 cameraPosition;
+uniform vec3 cameraDirection;
 
 //our frustum rays
 uniform vec3 ray00;
@@ -11,6 +13,7 @@ uniform vec3 ray01;
 
 uniform mat4 view;
 
+vec3 cameraUp = vec3(0, 1, 0);
 
 layout(binding=0,rgba8) uniform image2D destTex;
 layout (local_size_x = 16, local_size_y = 16) in;
@@ -30,58 +33,61 @@ const box boxes[] =
   {vec3(-0.5, 0.0, -0.5), vec3(0.5, 1.0, 0.5)}
 };
 
-vec2 intersectBox(vec3 origin, vec3 dir, const box b) 
+float RayVsSphere(vec3 ray, vec3 pos, vec4 sphere)
 {
-  vec3 tMin = (b.min - origin) / dir;
-  vec3 tMax = (b.max - origin) / dir;
-  vec3 t1 = min(tMin, tMax);
-  vec3 t2 = max(tMin, tMax);
-  float tNear = max(max(t1.x, t1.y), t1.z);
-  float tFar = min(min(t2.x, t2.y), t2.z);
-  return vec2(tNear, tFar);
+	float t1;
+	float t2;
+	float b = dot(ray, pos-sphere.xyz);
+	float c = dot(pos - sphere.xyz, pos - sphere.xyz) - pow(sphere.w, 2);
+
+	bool hit = false;
+	float f = pow(b, 2) - c;
+
+	if(f >=0)
+		hit = true;
+	
+	if(hit)
+	{
+		return 1;
+	}
+	return 0;
+
+}
+
+
+vec3 RayDirection()
+{
+	float width = 512;
+	float height = 512;
+	float normalized_i = (gl_GlobalInvocationID.x / width) - 0.5;
+	float normalized_j = (gl_GlobalInvocationID.y / height) - 0.5;
+
+	vec3 cameraRight =cross(cameraDirection, cameraUp);
+	cameraUp = cross(cameraRight, cameraDirection);
+
+	vec3 imagePoint = normalized_i * cameraRight +
+					  normalized_j * cameraUp + 
+					  cameraPosition + cameraDirection;
+
+	return imagePoint - cameraPosition;
 }
 
 void main()
 {
 	vec3 position = vec3((gl_GlobalInvocationID.xy), 0);
 
-	//float t = RayVsSphere(direction, position, sphere);
+	vec3 direction = RayDirection();
 
-
-	vec3 direction;
-	float interpolationx = position.x/512;
-	direction.x = mix(ray01.x, ray11.x, interpolationx);
-	
-	float interpolationy = position.y/512;
-	direction.y = mix(ray01.y, ray00.y, interpolationy);
-	
-	float interpolationz = (interpolationx+interpolationy)/2;
-	direction.z = target.z;
-	//direction.z = 1.0f;
-	direction = normalize(direction);
-
-
-	//vec2 screenPosition = vec2(gl_GlobalInvocationID.x/800, gl_GlobalInvocationID.y/800);
-	//
-	////float interpolationValue = abs(vec2(0,0)-gl_GlobalInvocationID.xy)
-	//vec3 interpolated00 = ray00 * (1/(length(vec2(0,0)-screenPosition)));
-	//vec3 interpolated01 = ray01 * (1/(length(vec2(0,1)-screenPosition)));
-	//vec3 interpolated11 = ray11 * (1/(length(vec2(1,1)-screenPosition)));
-	//vec3 interpolated10 = ray10 * (1/(length(vec2(1,0)-screenPosition)));
-	//
-	//direction = (1/4) * interpolated00+interpolated01+interpolated11+interpolated10;
-
-
-
-	//float t = RayVsSphere(direction, position, sphere);
-
-	vec2 lambda = intersectBox(position, direction, boxes[0]);
-	bool hit = lambda.x > 0.0 && lambda.x < lambda.y;
+	vec4 sphere = vec4(0, 0, 10, 1);
+	float t = RayVsSphere(direction, position, sphere);
 
 	ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
-	vec4 color = vec4(0,0,direction.z, 0);
+	
 	//vec4 color = vec4(direction.x,0,0, 0);
 	//vec4 color = vec4(0,direction.y,0, 0);
+	//vec4 color = vec4(0,0,direction.z, 0);
+	vec4 color = vec4(direction, 1);
+	//vec4 color = vec4(t, 0, 0, 1);
 	imageStore(destTex, storePos, color);
 }
 
@@ -107,6 +113,16 @@ void main()
 
 
 
+vec2 intersectBox(vec3 origin, vec3 dir, const box b) 
+{
+  vec3 tMin = (b.min - origin) / dir;
+  vec3 tMax = (b.max - origin) / dir;
+  vec3 t1 = min(tMin, tMax);
+  vec3 t2 = max(tMin, tMax);
+  float tNear = max(max(t1.x, t1.y), t1.z);
+  float tFar = min(min(t2.x, t2.y), t2.z);
+  return vec2(tNear, tFar);
+}
 
 float RayIntersectSphere(vec3 ray, vec3 dir, vec3 center, float radius)
 {
@@ -130,46 +146,46 @@ float RayIntersectSphere(vec3 ray, vec3 dir, vec3 center, float radius)
 	}
 }
 
-float RayVsSphere(vec3 ray, vec3 pos, vec4 sphere)
-{
-	float t1;
-	float t2;
-	float b = dot(ray, pos-sphere.xyz);
-	float c = dot(pos - sphere.xyz, pos - sphere.xyz) - pow(sphere.w, 2);
-
-	bool hit = false;
-	float f = pow(b, 2) - c;
-
-	if(f >=0)
-		hit = true;
-	
-	if(hit)
-	{
-		return 1;
-	}
-	return 0;
-
-
-	//float t1;
-	//float t2;
-	//float b = ray.d.Dot(ray.o - sphere.c);
-	//float c = (ray.o - sphere.c).Dot(ray.o - sphere.c) - powf(sphere.r, 2.0f);
-	//bool hit;
-	//float f = powf(b, 2.0f) - c;
-	//hit = f >= 0.0f? true:false;
-	//
-	//if(hit)
-	//{
-	//	
-	//	t1 = -b - sqrtf(f);
-	//	t2 = -b + sqrtf(f);
-	//	if(t1 < hitData.t || hitData.t < 0.0f)
-	//	{
-	//		hitData.t = t1;
-	//		hitData.color = sphere.color;
-	//	}
-	//}
-	//
-	//return hit;
-}
+//float RayVsSphere(vec3 ray, vec3 pos, vec4 sphere)
+//{
+//	float t1;
+//	float t2;
+//	float b = dot(ray, pos-sphere.xyz);
+//	float c = dot(pos - sphere.xyz, pos - sphere.xyz) - pow(sphere.w, 2);
+//
+//	bool hit = false;
+//	float f = pow(b, 2) - c;
+//
+//	if(f >=0)
+//		hit = true;
+//	
+//	if(hit)
+//	{
+//		return 1;
+//	}
+//	return 0;
+//
+//
+//	//float t1;
+//	//float t2;
+//	//float b = ray.d.Dot(ray.o - sphere.c);
+//	//float c = (ray.o - sphere.c).Dot(ray.o - sphere.c) - powf(sphere.r, 2.0f);
+//	//bool hit;
+//	//float f = powf(b, 2.0f) - c;
+//	//hit = f >= 0.0f? true:false;
+//	//
+//	//if(hit)
+//	//{
+//	//	
+//	//	t1 = -b - sqrtf(f);
+//	//	t2 = -b + sqrtf(f);
+//	//	if(t1 < hitData.t || hitData.t < 0.0f)
+//	//	{
+//	//		hitData.t = t1;
+//	//		hitData.color = sphere.color;
+//	//	}
+//	//}
+//	//
+//	//return hit;
+//}
 

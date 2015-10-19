@@ -69,8 +69,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\Skolprojekt\Raytracer\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Skolprojekt\Raytracer\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Skolstuff\Raytracer\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Skolstuff\Raytracer\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>D:\Skolstuff\Raytracer\include\glm;D:\Skolstuff\Raytracer\include\GL;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Skolstuff\Raytracer\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,9 +92,11 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>D:\Skolstuff\Raytracer\include\glm;D:\Skolstuff\Raytracer\include\GL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>D:\Skolstuff\Raytracer\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

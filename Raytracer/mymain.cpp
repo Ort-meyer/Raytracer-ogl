@@ -10,7 +10,6 @@
 #include <GL\freeglut.h>
 #include <glm\glm.hpp>
 
-
 #include "Camera.h"
 
 using namespace std;
@@ -27,6 +26,7 @@ GLuint computeHandle;
 void RenderScene();
 void HandleKeyboardInput(unsigned char key, int x, int y);
 void InitStuff();
+void MouseMove(int, int);
 
 
 //Random stuff
@@ -211,6 +211,7 @@ void InitializeGlutCallbacks()
 	glutDisplayFunc(RenderScene);
 	glutIdleFunc(RenderScene);
 	glutKeyboardUpFunc(HandleKeyboardInput);
+	glutPassiveMotionFunc(MouseMove);
 }
 
 GLuint GenerateTexture()
@@ -232,12 +233,19 @@ GLuint GenerateTexture()
 
 void InitStuff()
 {
-	m_camera = new Camera(vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0));
+	m_camera = new Camera(vec3(0, 0, -1), vec3(0, 1, 0), vec3(0, 0, 0));
 }
 
 void HandleKeyboardInput(unsigned char key, int x, int y)
 {
 	cout << key << endl;
+}
+
+void MouseMove(int x, int y) {
+
+	m_camera->GetMouse(x, y);
+
+	//glutWarpPointer(512, 356);
 }
 
 void RenderScene()
@@ -265,7 +273,7 @@ void RenderScene()
 	mat4 viewProj = m_camera->GetViewProj();
 	mat4 view = m_camera->GetView();
 
-	vec4 target = normalize(vec4(0, 0,1 , 0));
+	vec4 target = normalize(vec4(0, 0, -1, 0));
 	//vec4 target = vec4(0, 0, 1, 0);
 	//target = inverse(viewProj) * target;
 	vec3 target3 = m_camera->m_target;
@@ -275,6 +283,8 @@ void RenderScene()
 	glUniform4f(glGetUniformLocation(computeHandle, "sphere"), 200, 400, 20,50);
 	glUniform1i(glGetUniformLocation(computeHandle, "outputTexture"), 0);
 	glUniform3fv(glGetUniformLocation(computeHandle, "target"), 1, &target3[0]);
+	glUniform3fv(glGetUniformLocation(computeHandle, "cameraPosition"), 1, &m_camera->m_position[0]);
+	glUniform3fv(glGetUniformLocation(computeHandle, "cameraDirection"), 1, &m_camera->m_target[0]);
 	glUniformMatrix4fv(glGetUniformLocation(computeHandle, "view"), 1,GL_FALSE, &viewProj[0][0]);
 	glUniform3fv(glGetUniformLocation(computeHandle, "ray00"), 1, &m_camera->m_frustum.ray00[0]);
 	glUniform3fv(glGetUniformLocation(computeHandle, "ray10"), 1, &m_camera->m_frustum.ray10[0]);
@@ -315,6 +325,8 @@ void RenderScene()
 }
 
 
+
+
 int main(int argc, char** argv)
 {
 
@@ -326,7 +338,9 @@ int main(int argc, char** argv)
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("Raytracer");
 
+
 	InitializeGlutCallbacks();
+
 
 	//Initialize glew
 	GLenum res = glewInit();
@@ -340,7 +354,8 @@ int main(int argc, char** argv)
 	InitStuff();
 	textureHandle = GenerateTexture();
 	renderHandle = CreateRenderProgram();
-
+	int button, state;
+	float x, y;
 
 	ShaderInfo shaderInfo[] = { {GL_COMPUTE_SHADER, "ComputeShader.glsl"} , {GL_NONE, NULL} };
 
